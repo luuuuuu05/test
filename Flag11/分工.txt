@@ -1,0 +1,467 @@
+好的，展开每个人的详细执行步骤。因为内容量大，我会把完整计划作为 README 文件生成。先给你预览核心结构：
+
+成员 A 详细步骤（基础设施 + 抓取重构 + 手部模型）
+任务 A-1：创建 HapticHelper.cs
+文件： Assets/Scripts/Utils/HapticHelper.cs（新建）
+
+using System.Collections;
+using UnityEngine;
+using UnityEngine.XR;
+
+public static class HapticHelper
+{
+    static InputDevice? GetRightHand()
+    {
+        var devices = new List<InputDevice>();
+        InputDevices.GetDevicesWithCharacteristics(
+            InputDeviceCharacteristics.Right | InputDeviceCharacteristics.HeldInHand, devices);
+        return devices.Count > 0 ? devices[0] : null;
+    }
+
+    public static void SendHaptic(float amplitude, float duration)
+    {
+        var device = GetRightHand();
+        if (device.HasValue) device.Value.SendHapticImpulse(0u, amplitude, duration);
+    }
+
+    public static void Grab()           => SendHaptic(0.6f, 0.15f);
+    public static void GrabGold()       => SendHaptic(1.0f, 0.30f);
+    public static void Score()          => SendHaptic(0.2f, 0.08f);
+    public static void CountdownTick()  => SendHaptic(0.1f, 0.04f);
+    public static void CountdownGo()    => SendHaptic(0.8f, 0.25f);
+    public static void GameWin()
+    {
+        var coroutineHost = GameObject.FindObjectOfType<MonoBehaviour>();
+        if (coroutineHost != null) coroutineHost.StartCoroutine(WinPattern());
+    }
+    static IEnumerator WinPattern()
+    {
+        SendHaptic(0.5f, 0.1f); yield return new WaitForSeconds(0.15f);
+        SendHaptic(0.7f, 0.1f); yield return new WaitForSeconds(0.15f);
+        SendHaptic(1.0f, 0.2f);
+    }
+    public static void ButtonClick()    => SendHaptic(0.08f, 0.02f);
+    public static void PlaceObject()    => SendHaptic(0.15f, 0.06f);
+    public static void GrabFailed()     => SendHaptic(0.3f, 0.05f);
+}
+任务 A-2：创建 ParticleFactory.cs
+文件： Assets/Scripts/VFX/ParticleFactory.cs（新建）
+
+using UnityEngine;
+
+public static class ParticleFactory
+{
+    public static ParticleSystem SpawnBurst(Vector3 worldPos, Color color, int count = 12, float duration = 0.8f)
+    {
+        var go = new GameObject("VFX_Burst");
+        go.transform.position = worldPos;
+        var ps = go.AddComponent<ParticleSystem>();
+        var main = ps.main;
+        main.duration = duration;
+        main.loop = false;
+        main.startLifetime = 0.6f;
+        main.startSpeed = 2f;
+        main.startSize = 0.15f;
+        main.startColor = color;
+        main.simulationSpace = ParticleSystemSimulationSpace.World;
+        
+        var emission = ps.emission;
+        emission.rateOverTime = 0;
+        emission.SetBursts(new[] { new ParticleSystem.Burst(0f, count) });
+        
+        var shape = ps.shape;
+        shape.shapeType = ParticleSystemShapeType.Sphere;
+        shape.radius = 0.3f;
+
+        var renderer = go.GetComponent<ParticleSystemRenderer>();
+        renderer.material = new Material(Shader.Find("Particles/Standard Unlit"));
+        renderer.renderMode = ParticleSystemRenderMode.Billboard;
+
+        ps.Play();
+        Object.Destroy(go, duration + 0.5f);
+        return ps;
+    }
+
+    public static ParticleSystem SpawnFloatingScore(Vector3 worldPos, int score)
+    { /* 上飘粒子+TextMesh，等下展开 */ }
+
+    public static ParticleSystem SpawnGlow(GameObject attachTo, Color color)
+    { /* 附着粒子光环，loop=true */ }
+
+    public static ParticleSystem SpawnScoreRing(Vector3 worldPos, Color color)
+    { /* 得分扩散环 */ }
+}
+任务 A-3：创建 AudioHooks.cs
+文件： Assets/Scripts/Audio/AudioHooks.cs（新建）
+
+using UnityEngine;
+
+public static class AudioHooks
+{
+    // 音频资源就位后替换 Debug.Log 为实际 AudioSource.PlayOneShot
+    public static void Play(string sfxName)
+    {
+        Debug.Log($"[Audio] SFX: {sfxName}");
+        // TODO: AudioSource.PlayOneShot(GetClip(sfxName));
+    }
+}
+任务 A-4：删除 HandGrabDetector.cs
+直接删除 Assets/Scripts/Player/HandGrabDetector.cs
+
+任务 A-5：修复 FlagObject.OnTriggerEnter → XRI 方案
+文件： Assets/Scripts/Flag/FlagObject.cs
+
+改动点：
+
+删除 OnTriggerEnter 方法（整段）
+在 SetupCollision() 中，把 BoxCollider 的 size 从 (0.8, 1.0, 0.8) 改为 (1.5, 1.5, 1.5) 并设置 isTrigger = true
+添加 selectEntered 和 selectExited 的第二个监听器处理 hover 高亮
+任务 A-6：修复多人乐观隐藏
+文件： Assets/Scripts/Game/MultiGameManager.cs
+
+OnFlagGrabbed 改为：
+
+public void OnFlagGrabbed(FlagObject flag)
+{
+    if (State != MultiState.Playing) return;
+    // 不隐藏，变小+半透明表示等待
+    flag.transform.localScale = Vector3.one * 0.5f;
+    var r = flag.visual?.GetComponentInChildren<Renderer>();
+    if (r != null) { var mat = r.material; mat.color = new Color(1,1,1,0.4f); }
+    _net.GrabFlag(flag.FlagID, flag.transform.position);
+}
+HandleServerMessage 中 S_FLAG_REMOVE case 处添加恢复逻辑：
+
+被拒绝时（reason 不为空），把旗子 scale 和颜色恢复
+任务 A-7：接入震动+粒子+音效到抓取
+文件： Assets/Scripts/Flag/FlagObject.cs 的 OnGrabbed 方法
+
+在 _multiGM.OnFlagGrabbed(this) 之前加：
+
+HapticHelper.Grab();
+ParticleFactory.SpawnBurst(transform.position, FlagType == "gold" ? Color.yellow : 
+    FlagType == "red" ? Color.red : Color.white);
+AudioHooks.Play("flag_grab");
+MRFlag.OnGrabbed 同理。
+
+任务 A-8：创建 HandAnimatorDriver.cs
+文件： Assets/Scripts/Player/HandAnimatorDriver.cs（新建）
+
+using UnityEngine;
+using UnityEngine.XR;
+
+public class HandAnimatorDriver : MonoBehaviour
+{
+    public Animator handAnimator;
+    public XRNode handNode = XRNode.RightHand;
+
+    void Update()
+    {
+        if (handAnimator == null) return;
+        var device = InputDevices.GetDeviceAtXRNode(handNode);
+        device.TryGetFeatureValue(CommonUsages.grip, out float grip);
+        device.TryGetFeatureValue(CommonUsages.trigger, out float trigger);
+        handAnimator.SetFloat("Grip", grip);
+        handAnimator.SetFloat("Trigger", trigger);
+    }
+}
+任务 A-9：手部模型 Animator 设置
+在 Unity Editor 中：
+
+导入/创建手部骨骼模型
+创建 Animator Controller HandAnimator.controller
+添加参数 Grip (float, 0-1) 和 Trigger (float, 0-1)
+创建 4 个动画 clip：Hand_Idle(全开)、Hand_Point(食指伸出)、Hand_Grip(握拳)、Hand_Fist(全握)
+用 Blend Tree 混合
+成员 B 详细步骤（MRGame 单机打磨）
+任务 B-1：旗子浮动动画
+文件： Assets/Scripts/Game/MRFlag.cs
+
+在类中添加：
+
+private Vector3 _startPos;
+private float _seed;
+
+public void Setup(...)
+{
+    // ... 现有代码 ...
+    _startPos = transform.position;
+    _seed = Random.Range(0f, 2f * Mathf.PI);
+}
+
+void Update()
+{
+    if (!_grabbed)
+    {
+        float t = Time.time * 1.5f + _seed;
+        transform.position = _startPos + new Vector3(
+            Mathf.Sin(t * 0.7f) * 0.03f,
+            Mathf.Sin(t) * 0.05f,
+            Mathf.Cos(t * 0.6f) * 0.03f);
+        transform.Rotate(Vector3.up, 15f * Time.deltaTime);
+    }
+}
+任务 B-2：金旗闪烁粒子
+文件： Assets/Scripts/Game/MRGameManager.cs 的 SpawnFlags 方法
+
+在 flag.Setup(...) 之后加：
+
+if (types[i] == "gold")
+    ParticleFactory.SpawnGlow(go, new Color(1f, 0.84f, 0f, 0.3f));
+任务 B-3：FloatingScore.cs
+文件： Assets/Scripts/VFX/FloatingScore.cs（新建）
+
+用 3D Text（TextMeshPro 或 TextMesh）显示分数，从旗子位置向上飘 + 淡出，1.5s 后自毁。
+
+任务 B-4：分数递增动画
+文件： Assets/Scripts/UI/ScoreHUD.cs
+
+private int _displayScore;
+private Coroutine _scoreAnim;
+
+private IEnumerator AnimateScore(int target)
+{
+    int start = _displayScore;
+    float t = 0f;
+    while (t < 0.4f)
+    {
+        t += Time.deltaTime;
+        _displayScore = (int)Mathf.Lerp(start, target, t / 0.4f);
+        scoreText.text = $"Score: {_displayScore}";
+        if (t < 0.2f) scoreText.color = Color.Lerp(Color.white, Color.yellow, t / 0.2f);
+        else scoreText.color = Color.Lerp(Color.yellow, Color.white, (t - 0.2f) / 0.2f);
+        yield return null;
+    }
+    _displayScore = target;
+    scoreText.text = $"Score: {_displayScore}";
+    scoreText.color = Color.white;
+}
+任务 B-5：倒计时动画
+文件： Assets/Scripts/UI/CountdownUI.cs
+
+private IEnumerator AnimateCountdown(int count)
+{
+    string text = count > 0 ? count.ToString() : "GO!";
+    countdownText.text = text;
+    countdownText.color = count > 0 && count <= 5 ? Color.red : Color.white;
+    
+    float t = 0f;
+    while (t < 0.5f)
+    {
+        t += Time.deltaTime;
+        float s = 1f + Mathf.Sin(t / 0.5f * Mathf.PI) * 0.5f;
+        countdownText.transform.localScale = Vector3.one * s;
+        yield return null;
+    }
+    countdownText.transform.localScale = Vector3.one;
+}
+任务 B-6：游戏结束面板滑入
+文件： Assets/Scripts/UI/GameOverUI.cs
+
+在 OnGameEnded 中：
+
+// 替换 SetActive(true)
+gameOverPanel.SetActive(true);
+gameOverPanel.transform.localPosition = new Vector3(0, -800, 0); // 屏幕外
+// 协程 0.5s 内移动到 Vector3.zero
+任务 B-7：MRGameManager 接入 FloatingScore
+// OnFlagGrabbed 中添加
+FloatingScore.Spawn(flag.transform.position, flag.score);
+任务 B-8：MRGame 场景挂手部模型
+在 Unity Editor MRGame 场景中：
+
+找到 XR Controller Right 物体
+创建子物体，挂 SkinnedMeshRenderer（手模 3D 模型）
+挂 Animator（指向 A 建的 HandAnimator.controller）
+挂 HandAnimatorDriver，设 handNode = RightHand
+左手同理
+成员 C 详细步骤（MultiGame 多人打磨）
+任务 C-1：RemotePlayer Slerp 旋转
+文件： Assets/Scripts/Player/RemotePlayer.cs
+
+// Update 中，替换原来的直接设置
+if (_posBuffer.Count > 0)
+{
+    transform.position = Vector3.Lerp(transform.position, _posBuffer.Peek().pos, Time.deltaTime * 10f);
+    // Slerp rotation
+    var targetRot = Quaternion.Euler(0, _targetRotY, 0);
+    transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * 8f);
+}
+需要添加 _targetRotY 字段，在 UpdatePosition 中存储 pkt.rot_y。
+
+任务 C-2：远程玩家头顶名字
+文件： Assets/Scripts/Player/RemotePlayer.cs
+
+在 SetDisplayName 方法中创建 TextMeshPro Text 子物体：
+
+public void SetDisplayName(string name)
+{
+    this.name = "Remote_" + name;
+    // 创建名字标签
+    var labelObj = new GameObject("NameLabel");
+    labelObj.transform.SetParent(transform);
+    labelObj.transform.localPosition = new Vector3(0, 1.2f, 0);
+    var tmp = labelObj.AddComponent<TextMesh>();
+    tmp.text = name;
+    tmp.fontSize = 36;
+    tmp.alignment = TextAlignment.Center;
+    tmp.color = Color.white;
+    labelObj.transform.localScale = Vector3.one * 0.1f;
+}
+任务 C-3：等待对手动画
+文件： Assets/Scripts/Game/MultiGameManager.cs
+
+在 waitPanel 中用一个旋转的 Image（RectTransform.Rotate 每帧）：
+
+void Update()
+{
+    // ... 现有代码 ...
+    if (State == MultiState.Waiting && waitPanel != null && waitPanel.activeSelf)
+    {
+        // Rotate loading spinner
+        if (loadingIcon != null)
+            loadingIcon.Rotate(Vector3.back, 180f * Time.deltaTime);
+    }
+}
+需要添加 public GameObject loadingIcon 字段。
+
+任务 C-4：断线 UI
+文件： Assets/Scripts/Game/MultiGameManager.cs
+
+添加字段：
+
+[Header("UI - Disconnect")]
+public GameObject disconnectPanel;
+public Button reconnectButton;
+在 Start 中：
+
+_net.OnDisconnected += (reason) => {
+    disconnectPanel?.SetActive(true);
+};
+if (reconnectButton != null)
+    reconnectButton.onClick.AddListener(() => _net.Connect());
+任务 C-5：信号图标
+用简单的绿色/红色方块切换：
+
+[Header("UI - Signal")]
+public Image signalIcon;
+
+// 在 HandleServerMessage 或 Update 中
+signalIcon.color = _net.IsConnected ? Color.green : Color.red;
+任务 C-6：Buff 光环粒子
+case MessageTypes.S_BUFF_START:
+{
+    var buf = payload.ToObject<BuffPayload>();
+    var target = buf.player_id == GameContext.Instance.PlayerID ? 
+        FindObjectOfType<LocalPlayer>()?.gameObject :
+        FindObjectOfType<RemotePlayerManager>()?.GetPlayer(buf.player_id)?.gameObject;
+    if (target != null) _buffParticle = ParticleFactory.SpawnGlow(target, Color.magenta);
+    ...
+}
+任务 C-7：旗子网络同步动画
+文件： Assets/Scripts/Flag/FlagManager.cs
+
+public void RemoveFlag(string flagId)
+{
+    if (_flags.TryGetValue(flagId, out var flag))
+    {
+        Debug.Log($"[Flag] Removed {flagId}");
+        // 播放缩小消失动画
+        StartCoroutine(AnimateRemove(flag));
+    }
+}
+
+IEnumerator AnimateRemove(FlagObject flag)
+{
+    float t = 0f;
+    Vector3 origScale = flag.transform.localScale;
+    while (t < 0.3f)
+    {
+        t += Time.deltaTime;
+        flag.transform.localScale = Vector3.Lerp(origScale, Vector3.zero, t / 0.3f);
+        yield return null;
+    }
+    _flags.Remove(flag.FlagID);
+    Destroy(flag.gameObject);
+}
+SpawnFlag 同理做放大出现动画。
+
+任务 C-8+9 同 B-8 的手部模型 + 多人得分弹出
+成员 D 详细步骤（界面打磨）
+任务 D-1：SceneTransition 淡入淡出
+文件： Assets/Scripts/UI/SceneTransition.cs（新建）
+
+用 Canvas + Image（黑色，alpha 0→1→0），LoadScene 前后控制。核心方法：
+
+public static void LoadScene(string name)
+{
+    Instance.StartCoroutine(Transition(name));
+}
+IEnumerator Transition(string name)
+{
+    // Fade to black (0.5s)
+    while (alpha < 1) { alpha += Time.deltaTime * 2f; yield return null; }
+    SceneManager.LoadScene(name);
+    // Fade from black (0.5s, 需要新场景中的 SceneTransition.OnSceneLoaded 触发)
+}
+任务 D-2：确认弹窗
+文件： Assets/Scripts/UI/ConfirmDialog.cs（新建）
+
+通用组件：标题 Text + 描述 Text + 确认 Button + 取消 Button + Action 回调
+
+任务 D-3：主菜单按钮动画
+文件： Assets/Scripts/UI/JoinPanel.cs
+
+为每个按钮添加 OnPointerEnter/OnPointerExit/OnPointerClick 的 scale tween：
+
+hover: scale 1.0→1.1
+click: scale 1.1→0.95→1.0
+任务 D-4：地图列表卡片
+文件： Assets/Scripts/UI/MapSelectManager.cs
+
+创建 MapCard 预制件（Image + 3 行 Text + Delete 按钮），CreateMapButton 用 Instantiate(prefab) 替代 new GameObject(...) 拼接
+
+任务 D-5：Ghost 网格
+文件： Assets/Scripts/Game/MapEditorManager.cs
+
+在 CreateGhost 中加 LineRenderer，画 4 条底线 + 1 条中心竖线，颜色半透明绿/红
+
+任务 D-6：选中轮廓
+文件： Assets/Scripts/Game/MapEditorManager.cs
+
+为选中物体添加临时 LineRenderer 包围盒（8 个顶点画线），选中时显示，取消选中时销毁
+
+任务 D-7：手柄射线贝塞尔曲线
+场景： MapEditor.unity
+
+在 XR Ray Interactor 上设 Line Type = Bezier Curve，Raycast Mask 正确配置
+
+任务 D-8：BackButtonManager
+文件： Assets/Scripts/UI/BackButtonManager.cs（新建）
+
+public class BackButtonManager : MonoBehaviour
+{
+    public string targetScene = "MainMenu";
+    void Start()
+    {
+        GetComponent<Button>()?.onClick.AddListener(() => 
+            SceneTransition.LoadScene(targetScene));
+    }
+}
+每个场景的 BackBtn 挂这个组件即可，删除 WireBackButton 硬编码。
+
+依赖关系图
+A 必须先完成 → HapticHelper, ParticleFactory, AudioHooks, HandAnimatorDriver
+                 ↓
+    ┌────────────┼────────────┐
+    ↓            ↓            ↓
+    B            C            D
+    调用        调用        调用
+    HapticHelper HapticHelper HapticHelper
+    ParticleFactory ParticleFactory SceneTransition
+    FloatingScore Buff光环    ConfirmDialog
+                            BackButtonManager
+    
+    B 不碰 C 的任何文件
+    C 不碰 B 的任何文件
+    D 不碰 B/C 的任何文件
