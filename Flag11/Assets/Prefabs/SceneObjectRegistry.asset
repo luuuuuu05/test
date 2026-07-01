@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ff598b510b23d774981edb15d3f73527, type: 3}
+  m_Name: SceneObjectRegistry
+  m_EditorClassIdentifier: 
+  entries:
+  - displayName: White Flag
+    prefab: {fileID: 6096584740317044632, guid: 8f640de0e0cd5654ba849d49899b6415, type: 3}
+    icon: {fileID: 0}
+  - displayName: Red Flag
+    prefab: {fileID: 2958080120694302171, guid: 41be88823bde2634c94f64d08e56391e, type: 3}
+    icon: {fileID: 0}
+  - displayName: Gold Flag
+    prefab: {fileID: 6055922552842292578, guid: ff45996d7eec0be4c97932141f7de9e9, type: 3}
+    icon: {fileID: 0}
+  - displayName: Cube Obstacle
+    prefab: {fileID: 431990119361508119, guid: 48dfebafa1a2a434c94439a20b683e16, type: 3}
+    icon: {fileID: 0}
+  - displayName: Wall Panel
+    prefab: {fileID: 2278053979160549292, guid: 5a0736286432a4d439e3e155b178372c, type: 3}
+    icon: {fileID: 0}
+  - displayName: Wall
+    prefab: {fileID: 9180199260546733888, guid: bd85f7df187d4874392cad6995f8be1b, type: 3}
+    icon: {fileID: 0}
+  - displayName: Sphere
+    prefab: {fileID: 3946524295659413641, guid: bc42ce1e5375f4f41a060e9606fcd4e5, type: 3}
+    icon: {fileID: 0}
+  - displayName: Pillar
+    prefab: {fileID: 5729302108670327919, guid: 1d0302b417cfc234baa7a2d2b215f9ff, type: 3}
+    icon: {fileID: 0}
+  - displayName: Box
+    prefab: {fileID: 1709160551309352758, guid: be6783ef93463dd4a82784840cfeb0f8, type: 3}
+    icon: {fileID: 0}
+  - displayName: Ramp
+    prefab: {fileID: 2506580908081481359, guid: 4f5a25cd6181baf4eb7d818dd4a602c9, type: 3}
+    icon: {fileID: 0}
+  - displayName: Barrel
+    prefab: {fileID: 1399025849900631707, guid: 5b62f9bc0ea679943afa38b9b3ad8dd9, type: 3}
+    icon: {fileID: 0}
