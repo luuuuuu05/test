@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Default Local Group
+  m_EditorClassIdentifier: 
+  m_GroupName: Default Local Group
+  m_Data:
+    m_SerializedData: []
+  m_GUID: c6f929fdce673e94aa1884b4f92840f1
+  m_SerializeEntries:
+  - m_GUID: 1d0302b417cfc234baa7a2d2b215f9ff
+    m_Address: Assets/Prefabs/Pillar.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4f5a25cd6181baf4eb7d818dd4a602c9
+    m_Address: Ramp
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - mapeditor
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5b62f9bc0ea679943afa38b9b3ad8dd9
+    m_Address: Assets/Prefabs/Barrel.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bc42ce1e5375f4f41a060e9606fcd4e5
+    m_Address: Assets/Prefabs/Sphere.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bd85f7df187d4874392cad6995f8be1b
+    m_Address: Assets/Prefabs/Wall.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: be6783ef93463dd4a82784840cfeb0f8
+    m_Address: Assets/Prefabs/Box.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 82f64d7919afc364ebb0d3176dbc8132, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 523f8df41ab3e294497d0a847c73bb10, type: 2}
+    - {fileID: 11400000, guid: 51b2a4c29813f384d94aa7e656b6a659, type: 2}

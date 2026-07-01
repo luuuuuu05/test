@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1045 &1
+EditorBuildSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/MainMenu.unity
+    guid: e3b34c5ce47048240a167675d85600a2
+  - enabled: 1
+    path: Assets/Scenes/MapSelect.unity
+    guid: e1fda01c78d51114185ed9db3e48add6
+  - enabled: 1
+    path: Assets/Scenes/MRGame.unity
+    guid: 327fd8c0ce7f7624cb6e7cdc3d57104f
+  - enabled: 1
+    path: Assets/Scenes/MapEditor.unity
+    guid: 7ff1775740b2eb2449ac5c97ab4de24a
+  - enabled: 1
+    path: Assets/Scenes/MultiGame.unity
+    guid: d3df0e5215146c14399175e7b05f20da
+  m_configObjects:
+    Unity.XR.PXR.Settings: {fileID: 11400000, guid: 390a930573df214469eb1fb4ffa4994c, type: 2}
+    com.unity.addressableassets: {fileID: 11400000, guid: 2b5b855d40835834d890d513dc205176, type: 2}
+    com.unity.xr.management.loader_settings: {fileID: 11400000, guid: bdecda68781cae845861b9c9b48db7af, type: 2}
