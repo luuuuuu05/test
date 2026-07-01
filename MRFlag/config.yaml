@@ -1,0 +1,22 @@
+server:
+  http_port: 8080
+  ws_port: 8081
+  udp_port: 9090
+
+game:
+  default_duration: 180
+  default_max_flags: 5
+  default_min_flags: 4
+  respawn_delay: 2.0
+  grab_distance: 1.5
+  double_duration: 20
+  max_double_items: 1
+  scene_map_max_bytes: 262144
+  flag_weights:
+    white: 50
+    red: 35
+    gold: 15
+
+log:
+  level: info
+  format: json

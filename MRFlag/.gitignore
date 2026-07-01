@@ -1,0 +1,58 @@
+# Build outputs
+bin/
+dist/
+build/
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go caches and local tooling
+.cache/
+.gocache/
+coverage/
+coverage.*
+*.coverprofile
+
+# Logs and runtime dumps
+*.log
+*.pid
+*.tmp
+*.temp
+*.bak
+*.swp
+
+# Local config / environment
+.env
+.env.*
+!.env.example
+config.local.yaml
+config.*.local.yaml
+
+# IDE / editor
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Android / adb / Unity-side logs copied into this repo
+*.apk
+*.aab
+*.keystore
+*.jks
+adb-logcat*.txt
+logcat*.txt
+unity-log*.txt
+
+# Temporary docs generated during review/export
+~$*.docx
+*.pdf.tmp
